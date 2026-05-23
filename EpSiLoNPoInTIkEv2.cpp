@@ -5,8 +5,9 @@
 #define _WIN32_WINNT 0x0A00
 #define WINVER 0x0A00
 #define EpSi_OBF_ENDL
-#include <Windows.h>
-#include <winternl.h>
+#include <windows.h>
+#ifndef NO_WINTERNL
+#endif
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -15,10 +16,11 @@
 #include <iostream>
 
 extern "C" {
+#include "ntdll-stubs.h"
 #include "runassys/ntnative.h"
 #include "runassys/runassys.h"
 #include "runassys/ntdll-stubs/ntdll-stubs.c"
-#include "runassys/ntdll-stubs/ntdll.def.c"
+#include "runassys/ntdll-stubs/ntdll.def"
 #include "runassys/ntdll-stubs/ntdll-delayed.txt"
 }
 
@@ -31,17 +33,13 @@ extern "C" {
 #pragma comment(linker,"/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 
 
-##define EpSi_OBF_ENDL ; \
-{ \
-    /* Contenu vide pour éviter les erreurs de syntaxe */ \
-}
-
 #ifndef EpSi_OBF_ENDL
-#define EpSi_OBF_ENDL
+#define EpSi_OBF_END 1
 
-#if !__TINYC__ && !__GNUC__ && !__MINGW32__
+#if !defined(__TINYC__) && !defined(__GNUC__) && !defined(__MINGW32__)
 #define __attribute__(...)
 #endif
+
 
 // if virtualization disabled
 #if NO_OBF == 1 || VIRT != 1
