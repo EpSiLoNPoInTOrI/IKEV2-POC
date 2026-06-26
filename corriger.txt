@@ -560,8 +560,6 @@ uint64_t _byteswap_uint64(uint64_t val) {
 #define MIN_CHUNK_SIZE 0x100
 #define MAX_CHUNK_SIZE 0x10000
 #define MALFORMED_DATA_SIZE 2048
-#define DDOS_EXTRA_SIZE 512  // CORRIGÉ: Ajout de la constante manquante
-#define SKF_DDOS_EXTRA_SIZE 256  // CORRIGÉ: Ajout de la constante manquante
 #define SKF_FRAGMENTS 4
 #define MAX_RETRIES 3
 #define RETRY_DELAY_MS 100
